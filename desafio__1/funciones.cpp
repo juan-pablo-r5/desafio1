@@ -58,3 +58,53 @@ int leerArchivoTexto(const char* nombre, char*& datos, size_t& longitud) {
 bool verificarLongitud(size_t longitud, size_t minimo) {
     return longitud >= minimo;
 }
+
+unsigned char rotarDerecha(unsigned char valor, int n) {
+    return (valor >> n) | (valor << (8 - n));
+}
+
+unsigned char* desencriptar(const unsigned char* datosEnc, size_t longitud, int n, unsigned char K) {
+    unsigned char* salida = new unsigned char[longitud];
+    for (size_t i = 0; i < longitud; i++) {
+        unsigned char temp = datosEnc[i] ^ K;             // paso 1: XOR
+        salida[i] = rotarDerecha(temp, n);               // paso 2: rotación inversa
+    }
+    return salida; // el llamador debe hacer delete[]
+}
+
+void mostrarHex(const unsigned char* datos, size_t longitud) {
+    for (size_t i = 0; i < longitud; i++) {
+        cout << hex << (static_cast<int>(datos[i]) & 0xFF) << " ";
+    }
+    cout << dec << "\n";
+}
+
+unsigned char* comprimirRLE(const char* texto, size_t longitud, size_t& out_len) {
+    if (!texto || longitud == 0) {
+        out_len = 0;
+        return nullptr;
+    }
+
+    // Peor caso: cada caracter distinto → 2 bytes por caracter
+    unsigned char* salida = new unsigned char[longitud * 2];
+    size_t j = 0;
+
+    for (size_t i = 0; i < longitud; ) {
+        char actual = texto[i];
+        size_t conteo = 1;
+
+        // contar repeticiones
+        while (i + conteo < longitud && texto[i + conteo] == actual && conteo < 255) {
+            conteo++;
+        }
+
+        salida[j++] = (unsigned char)conteo;   // primero el conteo
+        salida[j++] = (unsigned char)actual;   // luego el caracter
+
+        i += conteo;
+    }
+
+    out_len = j;
+    return salida;
+}
+

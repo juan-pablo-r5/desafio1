@@ -47,6 +47,24 @@ int main() {
 
         cout << " Pista (texto): '" << datosPista << "'\n";
 
+        // Supongamos que ya leímos datosEnc y lenEnc
+        for (int n = 0; n < 8; n++) {
+            for (int K = 0; K < 256; K++) {
+                unsigned char* resultado = desencriptar(datosEnc, lenEnc, n, (unsigned char)K);
+
+                // Aquí podrías comparar con la pista o imprimir parte del texto desencriptado
+                cout << "n=" << n << ", K=" << K << " -> "
+                     << "primeros 8 chars: ";
+                for (int j = 0; j < 8 && j < lenEnc; j++) {
+                    cout << (char)resultado[j];
+                }
+                cout << "\n";
+
+                delete[] resultado;
+            }
+        }
+
+
         delete[] datosEnc;
         delete[] datosPista;
     }
