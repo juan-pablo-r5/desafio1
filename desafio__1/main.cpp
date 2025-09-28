@@ -1,5 +1,6 @@
 #include"Funciones.h"
 
+#include <cstdio> // para snprintf
 
 int main() {
     cout << "Cuantos archivos desea evaluar? ";
@@ -17,15 +18,17 @@ int main() {
             continue;
         }
 
-        string nombreEnc = "Encriptado" + to_string(i) + ".txt";
-        string nombrePista = "pista" + to_string(i)  + ".txt";
+        char nombreEnc[64];
+        char nombrePista[64];
+        snprintf(nombreEnc, sizeof(nombreEnc), "Encriptado%d.txt", i);
+        snprintf(nombrePista, sizeof(nombrePista), "pista%d.txt", i);
 
         unsigned char* datosEnc = nullptr;
         char* datosPista = nullptr;
         size_t lenEnc = 0, lenPista = 0;
 
-        int r1 = leerArchivoBinario(nombreEnc.c_str(), datosEnc, lenEnc);
-        int r2 = leerArchivoTexto(nombrePista.c_str(), datosPista, lenPista);
+        int r1 = leerArchivoBinario(nombreEnc, datosEnc, lenEnc);
+        int r2 = leerArchivoTexto(nombrePista, datosPista, lenPista);
 
         if ( r1 != OK || r2 != OK ) {
             cout << "Caso " << i << ": error al leer.\n";
@@ -40,35 +43,31 @@ int main() {
 
         size_t preview = lenEnc < 32 ? lenEnc : 32;
         cout << " Vista previa (hex) primeros " << preview << " bytes: ";
-        for ( size_t j = 0; j < preview; j++ ) {
-            cout << hex << (static_cast<int>(datosEnc[j]) & 0xFF) << " ";
-        }
-        cout << dec << "\n";
+        mostrarHex(datosEnc, preview);
 
         cout << " Pista (texto): '" << datosPista << "'\n";
 
-        // Supongamos que ya leímos datosEnc y lenEnc
-        for (int n = 0; n < 8; n++) {
-            for (int K = 0; K < 256; K++) {
-                unsigned char* resultado = desencriptar(datosEnc, lenEnc, n, (unsigned char)K);
+        // Comprimir pista en RLE (formato ternas)
+        size_t lenRLE = 0;
+        unsigned char* pistaRLE = comprimirRLE(datosPista, lenPista, lenRLE);
 
-                // Aquí podrías comparar con la pista o imprimir parte del texto desencriptado
-                cout << "n=" << n << ", K=" << K << " -> "
-                     << "primeros 8 chars: ";
-                for (int j = 0; j < 8 && j < lenEnc; j++) {
-                    cout << (char)resultado[j];
-                }
-                cout << "\n";
+        int n_val = -1, k_val = -1;
+        bool ok = encontrarClaveConPista(datosEnc, lenEnc, pistaRLE, lenRLE, n_val, k_val);
 
-                delete[] resultado;
-            }
+        if (ok) {
+            cout << "Combinacion encontrada: n=" << n_val
+                 << ", k=0x" << hex << uppercase << k_val << dec << "\n";
+
+        } else {
+            cout << " No se encontro ninguna combinacion con RLE.\n";
         }
-
 
         delete[] datosEnc;
         delete[] datosPista;
+        delete[] pistaRLE;
     }
 
     cout << "\nProcesamiento finalizado.\n";
     return 0;
 }
+
