@@ -53,9 +53,8 @@ int main() {
         mostrarHex(pistaLZ, lenLZ);
 
         int n_val = -1, k_val = -1;
-
-        // === Probar primero RLE ===
-        bool okRLE = encontrarClaveConPista(datosEnc, lenEnc, pistaRLE, lenRLE, n_val, k_val);
+        // Probar primero RLE
+        bool okRLE = encontrarClaveConPistaRLE(datosEnc, lenEnc, pistaRLE, lenRLE, n_val, k_val);
         if (okRLE) {
             cout << "Metodo identificado: RLE\n";
             cout << "Combinacion encontrada: n=" << n_val
@@ -72,9 +71,8 @@ int main() {
             delete[] datosDescifrados;
             delete[] textoPlano;
         } else {
-            // === Intentar con LZ78 ===
-            bool okLZ = encontrarClaveConPista(datosEnc, lenEnc, pistaLZ, lenLZ, n_val, k_val);
-
+            // Probar LZ78
+            bool okLZ = encontrarClaveConPistaLZ78(datosEnc, lenEnc, pistaLZ, lenLZ, n_val, k_val);
             if (okLZ) {
                 cout << "Metodo identificado: LZ78\n";
                 cout << "Combinacion encontrada: n=" << n_val
@@ -91,7 +89,7 @@ int main() {
                 delete[] datosDescifrados;
                 delete[] textoPlano;
             } else {
-                cout << " No se pudo identificar el metodo de compresion.\n";
+                cout << "No se pudo identificar el metodo de compresion.\n";
             }
         }
 

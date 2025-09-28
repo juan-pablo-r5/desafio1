@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstddef>
+#include <cstdio>   // snprintf
+#include <cstring>  // memcmp
 #include <new>
 using namespace std;
 
@@ -39,9 +41,13 @@ unsigned char* comprimirLZ78(const char* texto, size_t longitud, size_t& out_len
 
 
 // Buscar valores n y K probando pista comprimida
-bool encontrarClaveConPista(const unsigned char* datosEnc, size_t lenEnc,
-                                 const unsigned char* pistaComp, size_t lenPista,
-                                 int& n_encontrado, int& k_encontrado);
+bool encontrarClaveConPistaRLE(const unsigned char* datosEnc, size_t lenEnc,
+                               const unsigned char* pistaRLE, size_t lenPista,
+                               int& n_encontrado, int& k_encontrado);
+
+bool encontrarClaveConPistaLZ78(const unsigned char* datosEnc, size_t lenEnc,
+                                const unsigned char* pistaLZ, size_t lenPista,
+                                int& n_encontrado, int& k_encontrado);
 
 
 unsigned char* descomprimirRLE(const unsigned char* datos, size_t longitud, size_t& out_len);

@@ -1,8 +1,4 @@
 #include "funciones.h"
-#include <cstdio>   // snprintf
-#include <cstring>  // memcmp
-#include <new>
-
 
 bool existeEncriptado(int indice) {
     char nombre[64];
@@ -61,9 +57,7 @@ int leerArchivoTexto(const char* nombre, char*& datos, size_t& longitud) {
     return OK;
 }
 
-bool verificarLongitud(size_t longitud, size_t minimo) {
-    return longitud >= minimo;
-}
+
 
 unsigned char rotarDerecha(unsigned char valor, int n) {
     return (unsigned char)((valor >> n) | (valor << (8 - n)));
@@ -116,26 +110,59 @@ unsigned char* comprimirRLE(const char* texto, size_t longitud, size_t& out_len)
     return salida;
 }
 
-bool encontrarClaveConPista(const unsigned char* datosEnc, size_t lenEnc,
-                            const unsigned char* pistaComp, size_t lenPista,
-                            int& n_encontrado, int& k_encontrado) {
-    if (lenPista > lenEnc) return false;
+// RLE: ignorar primer byte de cada terna
+bool encontrarClaveConPistaRLE(const unsigned char* datosEnc, size_t lenEnc,
+                               const unsigned char* pistaRLE, size_t lenPista,
+                               int& n_encontrado, int& k_encontrado) {
+    size_t numTernasPista = lenPista / 3;
+    size_t numTernasRes   = lenEnc / 3;
 
     for (int n = 1; n < 8; n++) {
         for (int K = 0; K < 256; K++) {
             unsigned char* resultado = desencriptar(datosEnc, lenEnc, n, (unsigned char)K);
 
-            bool contiene = false;
-            // recorrer byte a byte en resultado
-            for (size_t i = 0; i + lenPista <= lenEnc; i++) {
-                if (memcmp(resultado + i, pistaComp, lenPista) == 0) {
-                    contiene = true;
-                    break;
+            for (size_t i = 0; i + numTernasPista <= numTernasRes; i++) {
+                bool match = true;
+                for (size_t j = 0; j < numTernasPista; j++) {
+                    unsigned char conteo_r = resultado[(i+j)*3 + 1];
+                    unsigned char char_r   = resultado[(i+j)*3 + 2];
+
+                    unsigned char conteo_p = pistaRLE[j*3 + 1];
+                    unsigned char char_p   = pistaRLE[j*3 + 2];
+
+                    if (conteo_r != conteo_p || char_r != char_p) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    delete[] resultado;
+                    n_encontrado = n;
+                    k_encontrado = K;
+                    return true;
                 }
             }
-
             delete[] resultado;
+        }
+    }
+    return false;
+}
 
+// LZ78: comparar terna completa
+bool encontrarClaveConPistaLZ78(const unsigned char* datosEnc, size_t lenEnc,
+                                const unsigned char* pistaLZ, size_t lenPista,
+                                int& n_encontrado, int& k_encontrado) {
+    if (lenPista > lenEnc) return false;
+    for (int n = 1; n < 8; n++) {
+        for (int K = 0; K < 256; K++) {
+            unsigned char* resultado = desencriptar(datosEnc, lenEnc, n, (unsigned char)K);
+            bool contiene = false;
+            for (size_t i = 0; i + lenPista <= lenEnc; i++) {
+                if (memcmp(resultado + i, pistaLZ, lenPista) == 0) {
+                    contiene = true; break;
+                }
+            }
+            delete[] resultado;
             if (contiene) {
                 n_encontrado = n;
                 k_encontrado = K;
